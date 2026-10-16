@@ -22,7 +22,7 @@ claude plugin install spec-to-ship@rocky-plugins
 
 Hand Claude a product spec ("here's spec 07, let's build it") and it runs the method:
 
-0. **Ask how far to go:** stop after the gate (default), commit and push, or deploy. In the same round: any design references (Figma, an existing mockup)? They become the binding look; otherwise visual changes get mockups first.
+0. **Ask how far to go:** stop after the gate (default), commit and push, or deploy. In the same round: which branch (it suggests one, e.g. `spec/07-feature`), and any design references (Figma, an existing mockup)? They become the binding look; otherwise visual changes get mockups first.
 1. **Survey** the code the spec touches, with current file and line references.
 2. **Interview** you: at most four questions per round, recommended option first, product questions only;
    engineering decisions are made and written down for you.

@@ -45,7 +45,14 @@ Part B's release line + notes).
 A request that already names the scope ("build, gate, deploy", "just commit it") answers this question. Don't
 re-ask later; the answer holds for the whole run.
 
-**In the same round, ask for design references:** a Figma link, an existing mockup or HTML file, screenshots. If
+**In the same round, ask which branch to work on,** and suggest one: a new branch from the up-to-date main branch,
+named after the spec and following the repo's existing pattern (e.g. `spec/12-resist`, `feature/12-resist`).
+Options: the suggested branch (default), a name of the owner's choice, or the current branch. Create it only from a
+clean tree (never carry over other people's uncommitted files); every commit of the run lands on it. With "commit
+and push" the branch is pushed and a pull request opened where the repo works that way; "deploy" happens only after
+the branch is merged the way the repo merges, never from the feature branch itself.
+
+**Also in that round, ask for design references:** a Figma link, an existing mockup or HTML file, screenshots. If
 there is one, it becomes the binding look: store it in `specs/MOCKUPS/` (or link it there) and name it in the spec
 header; read Figma through a design connector when one is available, otherwise ask for exports. Part B, the frontend
 builders and the UX verifier work against it, and no mockups get invented. If there is none and the change is

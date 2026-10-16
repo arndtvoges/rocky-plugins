@@ -26,9 +26,9 @@ Rules:
 
 ## Stop after the gate (default)
 
-Everything stays committed locally; don't push. Report:
+Everything stays committed locally on the run's branch; don't push. Report:
 
-- the local commits (sha and subject, oldest first);
+- the branch and its local commits (sha and subject, oldest first);
 - the gate summary (each step's rc and time, skipped steps named);
 - open issues and anything the verifiers left as minor;
 - for the owner's own release: Part B's post-deploy checks, migration and rehearsal notes, owner-only steps (real
@@ -38,8 +38,9 @@ The spec stays `building` until the owner confirms it's live; then set `status: 
 
 ## Commit and push
 
-1. Commit specific files only.
-2. Push to the main branch, or open a pull request if that's how the repo works.
+1. Commit specific files only, on the run's branch (chosen in the first round).
+2. Push that branch and open a pull request if that's how the repo works (title and body from the spec and the gate
+   summary); push to the main branch directly only when the owner chose to work on it.
 3. Check the CI run for the pushed commit and report its result and timing, plus the same owner notes as above. No
    deploy.
 
@@ -51,7 +52,8 @@ The spec stays `building` until the owner confirms it's live; then set `status: 
 
 ## Deploy
 
-1. Commit specific files; push.
+1. Commit specific files on the run's branch; get it into the main branch the way the repo merges (pull request
+   with green CI, or a direct merge if the owner works that way); deploy from the merged main branch only.
 2. If the deploy script needs a clean tree and a PM draft is modified: back it up, stash only that file, deploy,
    pop, verify byte-identical with `cmp`.
 3. Run the project's deploy command (e.g. a script that takes a pre-deploy backup, pushes the release branch,

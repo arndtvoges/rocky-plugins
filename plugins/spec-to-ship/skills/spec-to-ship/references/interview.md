@@ -32,6 +32,7 @@ Drop anything the product spec already decides; don't re-open it.
 # Spec NN — decision log (interview <owner> + orchestrator, <date>)
 
 Release scope (asked at the start): stop after the gate | commit and push | deploy.
+Branch (asked at the start): <name> (new from main | owner's name | current branch).
 
 Part A §x already settles: <list, so nobody re-opens them>.
 
