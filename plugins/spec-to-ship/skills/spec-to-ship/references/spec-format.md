@@ -20,7 +20,7 @@ specs/
 ```yaml
 ---
 status: ready            # draft | ready | building | done
-dependency: 08_INVESTMENT_ACCOUNTS.md   # optional; a YAML list if several
+dependency: 08_SOME_FEATURE.md   # optional; a YAML list if several
 ---
 ```
 
@@ -28,8 +28,8 @@ dependency: 08_INVESTMENT_ACCOUNTS.md   # optional; a YAML list if several
 |---|---|
 | PM still writing | `draft` |
 | Spec committed (PM's version, or after Part B in the full track) | `ready` |
-| Owner says "go" | `building` |
-| Deployed and post-deploy checks pass | `done` |
+| Owner says "go" (expedited: asks for the build) | `building` |
+| Live: deployed by the orchestrator with post-deploy checks passing, or confirmed live by the owner | `done` |
 
 Commit every status change. Don't start a build while a `dependency` isn't `done`. The `> **Status:**` quote under
 the title is the spec's history (who wrote what when), not its status.
@@ -75,27 +75,28 @@ TBDs**: decide and give the reason.
 
 | § | Section | Contents |
 |---|---|---|
-| — | Status quote + baseline | Main sha, migration head before → after, API operation count before → after, released prompt versions → new ones, canonical numbers changed or not, next ADR number. Owner rules that apply (e.g. "no balances anywhere"). |
+| — | Status quote + baseline | Main sha, migration head before → after, API operation count before → after, released prompt versions → new ones (if the repo versions prompts), canonical numbers changed or not, next ADR number. Owner rules that apply (e.g. "no personal examples in product text"). |
 | B0 | Where Part B departs from Part A | Table: Part A says / Part B says / why (decision id). |
 | B1 | What ships | Numbered list; new response/request fields. |
 | B2 | Semantics (MUST) | The rules: data shape and normalization, what the feature never does, what each AI call sees, error handling, privacy rules. |
 | B3 | Data model and migration | DDL, constraints, downgrade behaviour, head pins in tests, backfill or none. |
 | B4 | Write path and API contract | Services, routes, schemas, status codes, errors, audit, locking order. |
-| B5… | Feature sections | History, search, background jobs/re-runs, carry-over, AI prompts (new version folders), emails/exports — whatever the feature needs. |
+| B5… | Feature sections | History, search, background jobs/re-runs, carry-over, AI prompts (new version folders if the repo versions prompts), emails/exports — whatever the feature needs. |
 | Bn | Frontend | Components, copy file, states (empty/filled/read-only/loading/error), a11y (44 px targets, phone width without horizontal scroll, light/dark), mocks. |
 | Bn | Fakes and test data | Fake providers' hooks; whether canonical datasets change (prefer not). |
-| Bn | Tests | Named test files and what each proves, incl. leak/sentinel tests and isolation tests for every new route. |
+| Bn | Test plan | Per acceptance criterion: named tests (file, test name, layer from `testing.md`, what it proves). For each test: the owner (one workstream, `INTEGRATION` when it needs several, `FINAL` for E2E/pipeline placeholders), the expected failure against the stub (not-implemented error / 501 status / assertion on value X), and whether it is a regression guard written green. Every contract-time test must be writable against the contract (schemas, stubs, fixtures) alone. Incl. leak/sentinel tests and isolation tests for every new route or parameter. |
 | Bn | E2E | Which spec hosts the journey, ordering constraints, phone-width checks. |
 | Bn | Docs | Every doc file/section to update; ADR (incl. amendments of older specs/ADRs); CLAUDE.md gotcha; runbook; backlog. |
-| Bn | Ownership and workstreams | Contract step (single agent; the only one allowed to touch frozen files; exact file table; handover sentence), concurrent workstreams with disjoint **Owns** lists, final workstream; verifier lenses; DoD per workstream. |
-| Bn | Execution and release | Flow, gate commands, production checks before deploy (e.g. a cost baseline, read-only), deploy, post-deploy checks with exact queries, rollback, CI check. |
+| Bn | Ownership and workstreams | Contract step (single agent; the only one allowed to touch frozen files; exact file table incl. every acceptance test file, one per owner; a handover sentence that gives each acceptance file to its owner for marker removal only (the `FINAL` file: placeholders replaced by the real tests), assertions frozen), concurrent workstreams with disjoint **Owns** lists, final workstream; verifier lenses; DoD per workstream. |
+| Bn | Execution and release | Flow, gate commands, and the release scope the owner chose at the start (stop after the gate / commit and push / deploy). Post-deploy checks with exact queries either way (the owner runs them on their own release). Only with deploy: production checks before deploy (e.g. a cost baseline, read-only), deploy, rollback, CI check. |
 | Bn | Out of scope | |
 | Bn | Risks | |
 | Bn | Decisions | O (owner answers), D (owner defaults), E (engineering decisions from the interview), J (spec-writer judgement calls), each with reason. |
-| Bn | Acceptance criteria | Numbered, each mapped to a test or a post-deploy check. |
+| Bn | Acceptance criteria | Numbered, each mapped to a test in the test plan (or, only for facts that exist only live, a post-deploy check; without the deploy scope it goes into the report for the owner). |
 | Bn | Owner-overridable defaults | Numbered list in plain language; "Yes keeps it; '3 no' changes one". Interview defaults first, then the writer's judgement calls the owner might care about. |
 
 ## Expedited Part B
 
 150–300 lines: footprint (migration? new routes? prompt changes?), read shape, write shape, flows unified, copy,
-tests, docs, release, B0 departures. Same "no TBDs" rule.
+a test plan (named tests per place: backend/frontend written first and seen failing; E2E incl. phone width written
+after the code and proven able to fail by a deliberate break), docs, a release line with the scope the owner chose, B0 departures. Same "no TBDs" rule.

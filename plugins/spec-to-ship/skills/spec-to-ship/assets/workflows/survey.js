@@ -15,7 +15,7 @@ const CONFIG = {
     { key: 'logic', focus: 'services and background jobs the feature changes; existing similar mechanisms to reuse' },
     { key: 'ai', focus: 'AI calls, prompts and versions, fake providers, what each call sees today' },
     { key: 'frontend', focus: 'screens, components, copy files, mocks, tests the feature touches; what exists today' },
-    { key: 'ops', focus: 'tests, E2E ordering, docs that must change, ADR numbering, release/rehearsal tooling' },
+    { key: 'ops', focus: 'test layers present (unit/DB/API/integration/frontend/E2E), fixtures, factories, fakes and canonical data, how each runner marks a strict expected failure (and whether strictness is in committed files), E2E ordering, docs that must change, ADR numbering, release/rehearsal tooling' },
   ],
 }
 // ─────────────────────────────────────────────────────────────────────────────

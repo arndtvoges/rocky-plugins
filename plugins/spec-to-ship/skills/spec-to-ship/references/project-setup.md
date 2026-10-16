@@ -13,7 +13,7 @@ Subagents read it automatically, so it carries the rules every agent must follow
   stack you didn't create, **build agents never git add/commit/push/stash/checkout/reset** (the orchestrator commits).
 - **Commands table:** install, backend tests (own paths while iterating; the full suite command with worker count),
   foundation/contract tests, lint/types, frontend commands for agents vs gate-only, schema regeneration, dataset
-  regeneration, dev stack, E2E (and how to iterate on one spec), deploy rehearsal, image build, CLI.
+  regeneration, dev stack, E2E (and how to iterate on one spec), deploy rehearsal and image build (if any), CLI.
 - **Architecture map** (folders and what lives where) and **gotchas** learned in earlier epics (one bullet per
   hard-won rule, with the reason). Each epic's final workstream adds its gotchas.
 - **Ownership and change requests:** agents edit only files their workstream owns; anything else is a CCR (exact
@@ -29,14 +29,21 @@ lifecycle rules.
 - `docs/architecture.md` (normative names/signatures/DDL/API plus a change log section), `docs/adr/` (one ADR per
   epic decision that outlives the spec), `docs/runbook.md` (owner operations, post-deploy checks), a handoff folder
   for notes between sessions or phases, `specs/BACKLOG.md` (plain unordered list).
-- A work plan with the definition of done for build/fix/verify agents, including "run the full backend suite before
-  reporting" with a reduced worker count when several agents run suites.
+- A work plan with the definition of done for build/fix/verify agents: tests first (written from the spec, seen
+  failing for the right reason), then "run the full backend suite before reporting" with a reduced worker count when
+  several agents run suites.
 
 ## 4. Tests that make parallel agents safe
 
+See `testing.md` for the full catalog, the tests-first mechanics (strict markers per stack) and where test data comes
+from. At minimum:
+
 - Unit, DB (fresh database per test cloned from a migrated template), API (auth matrix, tenant isolation matrix,
   contract snapshot), integration (the real pipeline against fake external services), frontend unit tests with a
-  mocked API, E2E (real browser against a disposable stack), release rehearsals.
+  mocked API, E2E (real browser against a disposable stack), release rehearsals if the project deploys containers.
+  Shape-specific layers (tenancy, auth) only where the project has that shape.
+- A strict expected-failure marker (or the helper `testing.md` describes for stacks without one) in committed files,
+  switched off by one env var or flag (`RUN_PENDING=1`; pytest `--runxfail`).
 - Guard scripts for project rules (static AST checks: e.g. no direct clock calls, no float money, one writer for
   sensitive fields) — cheap and they catch whole classes of mistakes agents make.
 - Canonical fake dataset + an independent oracle that computes expected numbers; "numbers unchanged" becomes a
@@ -45,11 +52,12 @@ lifecycle rules.
   longest-first ordering, splitting the one test that floors the run). When the full suite runs in a few minutes,
   every agent can run it at every step.
 
-## 5. A deploy procedure the orchestrator can run
+## 5. A deploy procedure (only for the "deploy" release scope)
 
-One command that takes a backup, ships the release, waits for healthy services, checks the migration head, logs and
-readiness, and prints what it did. Read-only production access for post-deploy queries. Owner-only steps written
-down in the runbook.
+Without one, the method stops after the gate or pushes; don't build a deploy procedure unless the owner wants Claude
+to deploy. If they do: one command that takes a backup, ships the release, waits for healthy services, checks the
+migration head, logs and readiness, and prints what it did. Read-only production access for post-deploy queries.
+Owner-only steps written down in the runbook.
 
 ## 6. A place for persistent notes
 

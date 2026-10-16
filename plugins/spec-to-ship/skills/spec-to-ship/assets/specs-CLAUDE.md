@@ -7,8 +7,9 @@ be picked up or for the owner's "go"), `building`, `done` (live in production). 
 - Optional `dependency`: the file name of a spec that must be `done` before this one is built (e.g.
   `dependency: 08_SOME_FEATURE.md`; a YAML list if there are several). Don't start a build while a dependency isn't
   `done`.
-- Update the status at each step: spec committed → `ready`, owner's "go" → `building`, deployed → `done`. A new spec
-  gets front matter from its first commit.
+- Update the status at each step: spec committed → `ready`, owner's "go" (expedited: the owner's request to build)
+  → `building`, live in production → `done` (set by the orchestrator after its own deploy, otherwise when the owner
+  confirms it's live). A new spec gets front matter from its first commit.
 - A spec has two parts: Part A (the product document, kept as the PM wrote it) and Part B (the engineering spec,
   which wins where they differ and lists every departure in its first section).
 - `BACKLOG*.md` and spike reports in `SPIKES/` are not specs (no front matter); a spike report stays as long as a

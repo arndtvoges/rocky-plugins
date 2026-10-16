@@ -11,14 +11,17 @@ const CONFIG = {
   spec: '/path/to/repo/specs/NN_FEATURE.md',
   decisions: '/path/to/scratch/decisions.md',   // decision log from the interview (O/D/E)
   survey: '/path/to/scratch/survey.json',       // survey workflow result
-  template: '/path/to/repo/specs/<last-full-epic>.md', // a previous spec with a good Part B, if any
+  template: null,                               // a previous spec with a good Part B ('/path/to/repo/specs/NN_….md'), or null
   ownerRules: 'No owner-personal examples in product text.', // product-wide rules the owner set
+  specFormat: '/abs/path/to/skill/references/spec-format.md', // subagents don't know where the plugin is installed
+  testing: '/abs/path/to/skill/references/testing.md',
+  releaseScope: 'stop after the gate',          // the owner's answer: stop after the gate | commit and push | deploy
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BASE = `Repo ${CONFIG.repo}, main at ${CONFIG.mainSha}. Spec file: ${CONFIG.spec} (keep its front matter).
 Inputs: decision log ${CONFIG.decisions} (owner answers O*, owner defaults D*, engineering decisions E* — binding);
-code survey ${CONFIG.survey}; structural model ${CONFIG.template}.
+code survey ${CONFIG.survey}; ${CONFIG.template ? `structural model ${CONFIG.template}` : `no earlier Part B exists: follow ${CONFIG.specFormat}`}.
 Rules: no product code changes; never touch other specs; never read secrets; no git, no docker. Every file:line ref
 you cite must be verified against the current tree. Owner rules: ${CONFIG.ownerRules}`
 
@@ -27,7 +30,7 @@ const LENSES = [
   { key: 'privacy', prompt: 'LENS: privacy, security, leaks. User text never in logs, job results, error columns or foreign audit rows; DB error messages carrying row values; emails/exports (escaping, formula injection); third parties receiving data; limits enforced at every entry point.' },
   { key: 'data', prompt: 'LENS: data model, tenancy, concurrency, migration, release. DDL and test pins, tenancy/guards, lock order, races (in-flight background jobs), carry-over paths, downgrade, rehearsal needs, post-deploy checks, canonical numbers unchanged or regenerated on purpose.' },
   { key: 'ux', prompt: 'LENS: frontend and UX. Every owner default implemented, states (empty/filled/read-only/loading/error), phone width with no horizontal scroll, 44 px targets on each control own box, a11y names, copy placement, mocks, E2E placement and ordering constraints, conflicts with nearby specs.' },
-  { key: 'plan', prompt: 'LENS: completeness and build plan. Every Part A requirement and every O/D decision maps to a section, a test and a workstream with an Owns list; departures in B0; workstreams have disjoint files (contract step first); DoD includes the full test suite; docs list complete; owner-defaults section present; no TBDs.' },
+  { key: 'plan', prompt: `LENS: completeness and build plan. Every Part A requirement and every O/D decision maps to a section, a test and a workstream with an Owns list; departures in B0; workstreams have disjoint files (contract step first); DoD includes the full test suite; docs list complete; owner-defaults section present; no TBDs. The test plan covers every acceptance criterion with a named test and layer; each test has one owner (a workstream, INTEGRATION or FINAL) and an expected failure against the stub; contract-time tests can be written before any feature code exists; negative tests start with a positive precondition; one acceptance file per owner in the contract file table (rules: ${CONFIG.testing}).` },
 ]
 const FIND = { type: 'object', properties: { findings: { type: 'array', items: { type: 'object', properties: { severity: { type: 'string', enum: ['blocker', 'major', 'minor'] }, section: { type: 'string' }, problem: { type: 'string' }, fix: { type: 'string' } }, required: ['severity', 'section', 'problem', 'fix'] } } }, required: ['findings'] }
 
@@ -37,7 +40,9 @@ await agent(`${BASE}
 TASK: write Part B, the engineering spec and build plan, into ${CONFIG.spec}:
 - Rewrite only the header status quote (product session + spike, technical interview with decisions, engineering spec date; Part A kept as the PM wrote it; Part B wins where they differ, B0 lists departures; the build starts only after the owner's "go").
 - "# Part A — Product (PM, <date>)" containing the PM's sections VERBATIM.
-- "# Part B — Engineering spec" with a baseline paragraph and the sections of the skill's spec-format reference (B0 departures … decisions … acceptance criteria … owner-overridable defaults in plain language).
+- "# Part B — Engineering spec" with a baseline paragraph and every section of ${CONFIG.specFormat} (B0 departures … test plan … ownership and workstreams … execution and release … decisions … acceptance criteria … owner-overridable defaults in plain language).
+- The TEST PLAN maps every acceptance criterion to named tests (file, test name, layer from the catalog in ${CONFIG.testing}, what it proves). Per test: its owner (a workstream key; INTEGRATION when it needs several workstreams; FINAL for E2E journeys and whole-pipeline tests, which the contract step adds only as placeholders), the expected failure against the stub, and whether it is a regression guard written green. Every contract-time test must be writable against the contract (schemas, stubs, fixtures) alone. The contract file table lists one acceptance test file per owner; the handover sentence gives each file to its owner for marker removal only (the FINAL file: placeholders replaced by the real tests).
+- Release scope chosen by the owner: ${CONFIG.releaseScope}. Write it into "Execution and release"; post-deploy checks are written either way (the owner runs them on their own release).
 - Exact names, signatures, DDL, JSON shapes, copy, prompt text drafts, test names. No TBDs: decide engineering matters yourself with a reason.
 Return a short summary and every decision you made beyond the decision log.`, { label: 'write-part-b', phase: 'Write' })
 

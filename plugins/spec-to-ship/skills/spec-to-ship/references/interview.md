@@ -13,6 +13,8 @@ Drop anything the product spec already decides; don't re-open it.
 
 ## How to ask
 
+- **The release-scope question** (SKILL.md, "First question") is asked once before the survey, not in the product
+  rounds; skip it when the request already names the scope.
 - **At most 4 questions per round, at most 4 options per question.** Use the structured question tool when
   available. Rounds are unlimited: ask as many rounds as the decisions need.
 - **Recommended option first, marked "(Recommended)"**, with a one-line trade-off per option.
@@ -31,6 +33,8 @@ Drop anything the product spec already decides; don't re-open it.
 
 ```markdown
 # Spec NN — decision log (interview <owner> + orchestrator, <date>)
+
+Release scope (asked at the start): stop after the gate | commit and push | deploy.
 
 Part A §x already settles: <list, so nobody re-opens them>.
 
