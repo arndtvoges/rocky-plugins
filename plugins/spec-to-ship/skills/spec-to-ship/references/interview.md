@@ -13,10 +13,8 @@ Drop anything the product spec already decides; don't re-open it.
 
 ## How to ask
 
-- **The release-scope question** (SKILL.md, "First question") is asked once before the survey, not in the product
-  rounds; skip it when the request already names the scope.
 - **At most 4 questions per round, at most 4 options per question.** Use the structured question tool when
-  available. Rounds are unlimited: ask as many rounds as the decisions need.
+  available. Rounds are unlimited: ask as many rounds as the decisions need; the first takes the big forks.
 - **Recommended option first, marked "(Recommended)"**, with a one-line trade-off per option.
 - **Product questions only.** If the answer changes what the user sees, what it costs, or who can do what, ask.
   If it's an engineering choice (schema shape, where a helper lives, lock order), decide it yourself and log it.
@@ -25,7 +23,6 @@ Drop anything the product spec already decides; don't re-open it.
   accepted, but they're listed again as owner-overridable defaults in the spec.
 - **Use mockups for look questions.** If the owner has to choose between layouts, show them (a published HTML page
   in the product's real tokens) instead of describing them.
-- Rank questions by how much they change the build. The first round settles the big forks.
 - When an answer surprises you (the owner picks the non-recommended option, or adds scope), ask one follow-up only
   if the build genuinely can't proceed without it; otherwise make a sensible engineering call and log it.
 
@@ -50,8 +47,3 @@ Part A §x already settles: <list, so nobody re-opens them>.
 ```
 
 IDs are stable for the epic and referenced everywhere (Part B, tests, commit messages, reports).
-
-## After "go"
-
-"Go" without comments keeps every default. A later change ("I don't like that UI") is an owner's change: record it
-in Part B with its date and build it (usually expedited).

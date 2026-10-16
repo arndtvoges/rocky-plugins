@@ -1,7 +1,7 @@
 {
   "name": "spec-to-ship",
   "displayName": "Spec to Ship",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Take a feature from a product spec to a verified, release-ready build with multi-agent workflows; push or deploy only if you choose. Survey, owner interview, engineering spec with critique rounds and a test plan, a hard stop for the owner's go, tests written first, contract step, parallel workstreams with independent verifiers, release gate. Full and expedited tracks. Requires Claude Code's Workflow tool.",
   "author": {
     "name": "arndtvoges"

@@ -9,10 +9,10 @@ specs/
   02_SOME_FEATURE.md
   BACKLOG.md                # plain unordered list of small follow-ups (no priorities, no front matter)
   SPIKES/                   # read-only investigation reports cited by specs (no front matter)
+  MOCKUPS/                  # design references: the owner's (Figma links, exports, HTML) or approved mockups
   DRAFTS_DONT_WORK_ON/      # shelved ideas; never work on them
 ```
 
-- `ls specs/` before picking a number for a new spec.
 - Untracked spec files are the PM's drafts in progress: don't edit or commit them until the owner hands them over.
 
 ## Front matter = the truth about status
@@ -31,8 +31,8 @@ dependency: 08_SOME_FEATURE.md   # optional; a YAML list if several
 | Owner says "go" (expedited: asks for the build) | `building` |
 | Live: deployed by the orchestrator with post-deploy checks passing, or confirmed live by the owner | `done` |
 
-Commit every status change. Don't start a build while a `dependency` isn't `done`. The `> **Status:**` quote under
-the title is the spec's history (who wrote what when), not its status.
+Commit every status change. The `> **Status:**` quote under the title is the spec's history (who wrote what when),
+not its status.
 
 ## One file, two parts
 
@@ -49,6 +49,8 @@ status: ready
 > engineering spec and build plan**; where the two differ, Part B wins (its first section lists every departure).
 > The build starts only after the owner's "go".
 >
+> **UI reference:** `MOCKUPS/<NN>_<NAME>.html` or a Figma link (binding look), if any.
+>
 > **Relation to other specs:** ...
 
 ---
@@ -64,8 +66,8 @@ questions for engineering)
 ```
 
 Part A is never edited after hand-over, even to fix a typo; disagreements go into Part B's B0 table. If the owner
-changes something after release, Part B records it as "owner's change of <date>" (and the owner-defaults list strikes
-the old item through).
+changes something after release, Part B records it as "owner's change of <date>" (usually built expedited; the
+owner-defaults list strikes the old item through).
 
 ## Part B skeleton (full track)
 
@@ -84,10 +86,10 @@ TBDs**: decide and give the reason.
 | B5… | Feature sections | History, search, background jobs/re-runs, carry-over, AI prompts (new version folders if the repo versions prompts), emails/exports — whatever the feature needs. |
 | Bn | Frontend | Components, copy file, states (empty/filled/read-only/loading/error), a11y (44 px targets, phone width without horizontal scroll, light/dark), mocks. |
 | Bn | Fakes and test data | Fake providers' hooks; whether canonical datasets change (prefer not). |
-| Bn | Test plan | Per acceptance criterion: named tests (file, test name, layer from `testing.md`, what it proves). For each test: the owner (one workstream, `INTEGRATION` when it needs several, `FINAL` for E2E/pipeline placeholders), the expected failure against the stub (not-implemented error / 501 status / assertion on value X), and whether it is a regression guard written green. Every contract-time test must be writable against the contract (schemas, stubs, fixtures) alone. Incl. leak/sentinel tests and isolation tests for every new route or parameter. |
+| Bn | Test plan | Per acceptance criterion, the named tests with the fields of `testing.md` "Tests first" point 1 (owner incl. `INTEGRATION`/`FINAL`, expected stub failure, regression guards per "Rules for contract-time tests"); every contract-time test writable against the contract alone; incl. leak/sentinel tests and isolation tests for every new route or parameter. |
 | Bn | E2E | Which spec hosts the journey, ordering constraints, phone-width checks. |
 | Bn | Docs | Every doc file/section to update; ADR (incl. amendments of older specs/ADRs); CLAUDE.md gotcha; runbook; backlog. |
-| Bn | Ownership and workstreams | Contract step (single agent; the only one allowed to touch frozen files; exact file table incl. every acceptance test file, one per owner; a handover sentence that gives each acceptance file to its owner for marker removal only (the `FINAL` file: placeholders replaced by the real tests), assertions frozen), concurrent workstreams with disjoint **Owns** lists, final workstream; verifier lenses; DoD per workstream. |
+| Bn | Ownership and workstreams | Contract step (single agent; the only one allowed to touch frozen files; exact file table incl. every acceptance test file, one per owner; the handover sentence (`testing.md` point 2)), concurrent workstreams with disjoint **Owns** lists, final workstream; verifier lenses; DoD per workstream. |
 | Bn | Execution and release | Flow, gate commands, and the release scope the owner chose at the start (stop after the gate / commit and push / deploy). Post-deploy checks with exact queries either way (the owner runs them on their own release). Only with deploy: production checks before deploy (e.g. a cost baseline, read-only), deploy, rollback, CI check. |
 | Bn | Out of scope | |
 | Bn | Risks | |
@@ -99,4 +101,5 @@ TBDs**: decide and give the reason.
 
 150–300 lines: footprint (migration? new routes? prompt changes?), read shape, write shape, flows unified, copy,
 a test plan (named tests per place: backend/frontend written first and seen failing; E2E incl. phone width written
-after the code and proven able to fail by a deliberate break), docs, a release line with the scope the owner chose, B0 departures. Same "no TBDs" rule.
+after the code and proven able to fail by a deliberate break; negative tests start with a positive precondition),
+docs, a release line with the scope the owner chose, B0 departures. Same "no TBDs" rule.

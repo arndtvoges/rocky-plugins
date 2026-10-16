@@ -30,9 +30,6 @@ were added later as improvements). Skim this once per epic.
   included) into exception messages, tracebacks and job error columns. Sanitize at the engine level.
 - **Example text leaks into the product.** The owner's personal purchase from the spec's problem statement ended up
   as a prompt example and in the runbook. Product text uses neutral examples.
-- **Released prompts are immutable.** New behaviour = new version folder; old renders stay byte-identical and are
-  snapshot-pinned.
-
 - **Test the production configuration, not a test-only one.** A security header differed by configuration: with the
   real bot-protection keys (production only) the CSP gained an explicit `frame-src` that dropped the same-origin
   fallback and blocked an embedded document. Every test ran with the fake provider, so the E2E test that looked
@@ -53,6 +50,5 @@ were added later as improvements). Skim this once per epic.
 
 ## Honesty
 
-- When you said something wrong ("this run logs the CPU model" when the step didn't exist yet), correct it in the
-  next message, plainly.
-- Don't report a step done because its tests pass if the goal wasn't met (a test split that saved nothing).
+- Incidents behind SKILL.md "Report faithfully": a claimed CPU-model log that didn't exist yet; a test split reported
+  done that saved nothing.

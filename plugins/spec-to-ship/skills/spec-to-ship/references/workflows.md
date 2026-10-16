@@ -24,9 +24,8 @@ rules a phase needs; don't paste CLAUDE.md. The block states:
    every default" (or which ones changed).
 2. What is already committed in earlier phases and therefore **frozen** (changes go into the report as a CCR:
    exact file, exact diff, reason).
-3. Hard safety rules: the project's agent marker (e.g. an env var every shell exports), never read secret files,
-   never contact real external services (fake providers only), only the agent-safe docker/stack targets, **no git
-   add/commit/push/stash/checkout/reset**, never touch the PM's drafts or production.
+3. Hard safety rules: the template's `CONFIG.safety` (survey/spec: their inline rules line), filled from the repo
+   CLAUDE.md (`project-setup.md` §1) plus "never touch the PM's drafts or production".
 4. The owner rules for the product (e.g. "no owner-personal examples in product text", "no third-party trackers").
 5. "Other agents work in the same tree at the same time: edit only the files your workstream owns, never revert or
    reformat others' changes, expect unrelated files to change under you; name a peer's failure, never fix it." Plus
@@ -37,27 +36,18 @@ rules a phase needs; don't paste CLAUDE.md. The block states:
 
 ## Structured results
 
-Builders and fixers return a REPORT: `summary`, `files_changed`, `tests` (for the contract step `exit_gate`) =
-every DoD command with counts, `ccrs`, `open_issues`. Workstream builders and the final workstream also return
-`red_run` (path of the saved red-run file plus counts: the failing command, test names and first failure lines,
-before any implementation) and `markers_removed` (the acceptance tests whose markers they removed); the expedited
-builders return `red_run`.
-The contract step returns `acceptance_tests` (`test`, `criterion`, `owner`, `reason_seen`); the orchestrator pastes
-each owner's slice into that workstream's CONFIG entry. Verifiers return a VERDICT (`verdict` pass|fail,
-`findings[]` with `severity` blocker|major|minor, `file`, `problem`, `evidence`, `fix`, plus `checked`). Pass only if
-no blocker or major remains. A loop runs while any non-minor finding exists, with a hard cap (2 rounds for
-workstreams, 1 for expedited).
+Reuse the templates' schema constants (REPORT, VERDICT, ACCEPTANCE). The rules the schemas don't show: `tests`
+(contract step: `exit_gate`) lists every DoD command with its counts; the orchestrator pastes each owner's slice of
+the contract step's `acceptance_tests` into that workstream's CONFIG entry; a verifier passes only when no blocker
+or major remains; a fix loop runs while any non-minor finding exists, capped at 2 rounds (1 for expedited).
 
 ## Definition of done (DoD) per agent
 
-- **Tests first:** write the tests Part B assigns to this agent before the code, run them, save the red run (each
-  failure must be missing behaviour), then implement. Remove the `ACCEPT:` markers in its own acceptance file(s) once
-  those tests pass (delete the marker line or unwrap the wrapper call, `testing.md` "Removing a marker"); never change
-  their assertions (a wrong test is a CCR).
+- **Tests first** per `testing.md` point 3 (red run saved, own markers removed, assertions never changed; a wrong
+  test is a CCR).
 - Lint, format check, type check, the project's guard scripts.
 - Its own test paths while iterating (no parallelism flags, fast feedback).
 - **The full test suite once at the end**, with a reduced worker count when several agents run suites at once.
-  Running only "my tests" lets integration problems through; the full suite at every step surfaces them early.
 - **Peer errors:** if collection or compilation fails in a file the agent doesn't own (a peer's half-written file),
   rerun once a few minutes later; if it still fails, report `peer error: <file>`. The DoD is then its own paths plus
   the full suite minus the named peer errors (pytest: `--ignore <file>` for that run; never in the gate). Give
@@ -70,12 +60,8 @@ workstreams, 1 for expedited).
 
 - Independent: a fresh agent that didn't build the thing, with the builder's report as a claim to check.
 - Read-only on repo files; scratch tests and screenshots only under a scratch dir.
-- Tests-first evidence (details in `testing.md`, "What verifiers check"): `git show <contractSha>:<file>` shows each
-  owned acceptance test with its marker (never check out an old commit); `git diff -w -U0 <contractSha> --
-  <acceptance files>` removes or unwraps only markers, every assertion line unchanged; the `red_run` file exists and
-  every line is missing behaviour; marked tests run with markers off fail for the expected reason. Flag
-  outside-ownership changes only when the agent's `files_changed` lists them or no workstream owns the file (in a
-  shared tree, others' edits aren't its doing). At the end of the build: no `ACCEPT:` tag left, no acceptance assertion weakened or deleted since the contract commit.
+- Tests-first evidence: `testing.md` "What verifiers check". Flag outside-ownership changes only when the agent's
+  `files_changed` lists them or no workstream owns the file (in a shared tree, others' edits aren't its doing).
 - Concrete checks, not "review the code": re-run the DoD, write scratch tests for the risky cases (races, other
   tenants' ids, user decisions never overwritten, error paths), drive a real browser on an agent-safe dev stack at
   phone and desktop width, light and dark, measure 44 px targets on each control's own box, look for horizontal
@@ -95,17 +81,13 @@ tests, and re-runs the full DoD. Then the same verifier lens runs again (round N
 - `parallel()` only where the next step needs all results (e.g. a fixer that takes every failing lens at once).
 - Commit between workflows (contract, workstreams, integration) so each phase starts from a clean, named commit and
   "frozen" means something.
-- Commits stay local until the final gate; push only if the owner chose "commit and push" or "deploy".
 - Keep agents per workflow reasonable (≤10–15); split big phases into consecutive workflows.
 
 ## Pitfalls seen in practice
 
 - **Resuming a parallel phase** re-runs agents when the call order changed; after a pause, write a continuation
   script that starts from the last committed state and reads a handoff note.
-- **Agents claiming facts from the task text** ("no production call used v5 yet") must be checked by the
-  orchestrator before commit; verifiers should flag unverified claims.
+- **Agents claiming facts from the task text:** verify them before commit; verifiers flag unverified claims.
 - **Builders sweeping formatters over the whole tree** reformat peers' files; tell them to format only their paths.
-- **E2E checks right after a viewport change** can read a layout mid-render; measurements should retry until the
-  layout settles (`expect(...).toPass()`), not sleep.
 - **Global state leaks between tests** (a flag set by one test changes later tests on the same worker) show up only
   under new test orders; reset process globals in `finally`.

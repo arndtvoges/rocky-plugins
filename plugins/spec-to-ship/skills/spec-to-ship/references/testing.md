@@ -109,68 +109,17 @@ markers off and check the lines themselves.
 
 ### Stacks without a strict expected-failure marker
 
-Never fall back to a plain skip or ignore for an acceptance test (the `FINAL` placeholders are the one skip).
-
-- **Rust:** stubs use `todo!()`. Acceptance tests carry
-  `#[cfg_attr(not(feature = "run_pending"), should_panic(expected = "not yet implemented"))] // ACCEPT:WS-B`, which
-  checks the reason too; for a test that fails by assertion, drop `expected`. Declare `run_pending = []` under
-  `[features]`; markers off is `cargo test --features run_pending`. `should_panic` is strict: no panic, test fails.
-- **Go:** a committed helper (in a `_test.go` file or a test-only package) runs the body against a recording
-  `testing.TB` and fails when nothing failed. The body uses only the `t` it is given (no subtests):
-
-  ```go
-  type recorder struct { testing.TB; failed bool; first string }
-  func (r *recorder) fail(s string)             { if !r.failed { r.failed, r.first = true, s } }
-  func (r *recorder) Error(a ...any)            { r.fail(fmt.Sprint(a...)) }
-  func (r *recorder) Errorf(f string, a ...any) { r.fail(fmt.Sprintf(f, a...)) }
-  func (r *recorder) Fail()                     { r.fail("Fail") }
-  func (r *recorder) Failed() bool              { return r.failed }
-  func (r *recorder) Fatal(a ...any)            { r.fail(fmt.Sprint(a...)); runtime.Goexit() }
-  func (r *recorder) Fatalf(f string, a ...any) { r.fail(fmt.Sprintf(f, a...)); runtime.Goexit() }
-  func (r *recorder) FailNow()                  { r.fail("FailNow"); runtime.Goexit() }
-
-  func Pending(t *testing.T, tag string, body func(t testing.TB)) {
-  	t.Helper()
-  	if os.Getenv("RUN_PENDING") != "" { body(t); return }
-  	r := &recorder{TB: t}
-  	done := make(chan struct{})
-  	go func() {
-  		defer close(done)
-  		defer func() { if p := recover(); p != nil { r.fail(fmt.Sprint("panic: ", p)) } }()
-  		body(r)
-  	}()
-  	<-done
-  	if !r.failed { t.Fatalf("%s passed unexpectedly: remove Pending", tag) }
-  	t.Logf("%s pending: %s", tag, r.first)
-  }
-  ```
-
-  Used as `Pending(t, "ACCEPT:WS-B", func(t testing.TB) { ... })`; stubs `panic("not implemented")`.
-- **Java/Kotlin (JUnit 5):** stubs throw `UnsupportedOperationException` (Kotlin: `TODO()`). A ~20-line
-  `InvocationInterceptor` extension behind `@Pending("ACCEPT:WS-B")`: when `RUN_PENDING` is set it just runs the
-  test; otherwise it aborts the test (`TestAbortedException` with the failure message) when the body throws, and
-  fails it when the body passes. JUnit Pioneer's `@ExpectedToFail("ACCEPT:WS-B")` does the same if the project may
-  add that test dependency, but has no off switch.
-- **.NET:** a `Pending.Run("ACCEPT:WS-B", () => { ... })` helper that catches the stub's `NotImplementedException` and
-  the framework's assertion exception and fails when nothing was thrown (xUnit, MSTest). NUnit 3+ records an
-  assertion failure in the result before throwing it, so a catch doesn't help there: use the fallback below.
-- **Node's built-in runner** (`node:test`; its `todo` isn't strict): a helper `pending(tag, name, fn)` that wraps
-  `test(...)`, runs `fn(t)` directly when `RUN_PENDING` is set, and otherwise catches the failure (logging it with
-  `t.diagnostic`) and calls `assert.fail(...)` when `fn` didn't throw.
-- **Anything else:** tag the acceptance tests (build tag, JUnit `@Tag`, test category), exclude the tag from the
-  normal suite, and add a `pending-check` command that runs only the tagged tests with a JUnit XML report and fails if
-  any of them passed. Run `pending-check` in every DoD and in the gate, or unexpected passes go unnoticed.
+Rust, Go, JUnit, .NET, `node:test`, others: `markers-other-stacks.md`. Never fall back to a plain skip (the `FINAL`
+placeholders are the one skip).
 
 ### Removing a marker
 
-A workstream removes a marker in one of two ways, depending on the stack, and changes nothing else in the test:
+A workstream removes a marker in one of two ways, depending on the stack (other stacks: `markers-other-stacks.md`),
+and changes nothing else in the test:
 
-- **Marker line:** delete the line. pytest `xfail` decorator, Playwright `test.fail(...)`, RSpec `pending`, Rust
-  `cfg_attr`, JUnit `@Pending`.
+- **Marker line:** delete the line. pytest `xfail` decorator, Playwright `test.fail(...)`, RSpec `pending`.
 - **Wrapper call:** replace the wrapper by the plain test call, body untouched. Vitest/Jest: `pending('ACCEPT:WS-C')(`
-  becomes `test(` on the same line. node:test: `pending(tag, name, fn)` becomes `test(name, fn)`. Go and .NET:
-  unwrap `Pending(t, "ACCEPT:WS-B", func(t testing.TB) { ... })` or `Pending.Run("ACCEPT:WS-B", () => { ... })` so
-  the body's statements sit directly in the test function, every statement unchanged (only the indentation moves).
+  becomes `test(` on the same line.
 
 So `git diff -w -U0 <contractSha> -- <acceptance files>` shows only deleted marker lines and the rewritten opening and
 closing lines of unwrapped wrappers; every assertion line is unchanged.
@@ -180,9 +129,8 @@ closing lines of unwrapped wrappers; every assertion line is unchanged.
 - Every acceptance criterion maps to a test (or to a live-only post-deploy check).
 - Each owned acceptance test existed with its marker at the contract commit: `git show <contractSha>:<file>`. Never
   check out an old commit; the contract's green strict gate proves the test failed then.
-- `git diff -w -U0 <contractSha> -- <acceptance files>` removes or unwraps only markers ("Removing a marker"), every
-  assertion line unchanged; in the `FINAL` file, placeholders are replaced by real tests. Any other change needs an
-  applied CCR.
+- The diff from "Removing a marker" shows only marker removals (`FINAL` file: placeholders replaced); any other change
+  needs an applied CCR.
 - The red run file exists and every line is missing behaviour; marked tests run with markers off show the expected
   failure. Optionally reproduce a workstream's own red run: `git archive <contractSha> | tar -x -C <scratch>/base`,
   copy the new tests in and watch them fail.
@@ -211,8 +159,7 @@ tests; E2E becomes a scripted session against the built artefact.
 - **Snapshot tests** for AI prompts, tool definitions and email templates, byte for byte; updated only on purpose,
   and released versions stay pinned forever. Never at contract time (see the rules above).
 
-### Database tests (real database in a container; a fresh database per test)
-- A fresh database per test, cloned from a migrated template (or the stack's fastest way to get a clean database).
+### Database tests (real database in a container, fresh per test: cloned from a migrated template or the stack's fastest equivalent)
 - Service behaviour against real SQL: transactions, locks, concurrency, queues with SKIP LOCKED.
 - **Migrations:** upgrade, downgrade (or its refusal), idempotence, "migrated == freshly created".
 - **Multi-tenant isolation (if multi-tenant):** every query scoped; an SQL auditor flags any unscoped statement during
@@ -245,16 +192,16 @@ tests; E2E becomes a scripted session against the built artefact.
 - Few tests, each a long user journey; ordered and stateful when that mirrors real use.
 - A mobile project: phone width without horizontal scroll, 44 px touch targets measured on each control's own box,
   an open sheet or dialog keeping its buttons on screen.
-- Measurements retry until the layout settles (no sleeps).
+- Measurements retry until the layout settles (`expect(...).toPass()`, no sleeps): a check right after a viewport
+  change can read a layout mid-render.
 
 ### Release rehearsals (if the project deploys containers; before a deploy)
 - Production compose behind the real proxy setup: headers, cookies, client IP, backup and restore.
 - Migration rehearsal on a synthetic database shaped like production, and (orchestrator only) on a copy of the
   production dump, with before/after snapshot diffs.
 
-### Live smoke tests and independent review
+### Live smoke tests
 - Opt-in tests against the real AI provider, owner only, never in CI.
-- Independent verifier agents per workstream and per lens (money, tenancy, AI, privacy, UX) before release.
 
 ## Where test data comes from
 
@@ -267,8 +214,6 @@ No test talks to a real external service; real data appears only in the orchestr
   they serve the canonical data and can mint extra tenants or special accounts on demand.
 - **Fake LLM:** deterministic answers from a catalog keyed by input, plus directives that force refusals, failures
   and delays; feature-specific hooks (e.g. a keyword table) local to the fake.
-- **Factories:** small helpers that build valid rows with sensible defaults, overridden per test.
-- **Generated inputs:** property-test strategies.
 - **Frontend mocks:** typed fixtures that mirror the API's serializer rules, served by a mocked network layer.
 - **Time:** an injected clock (frozen or offset), so dates are reproducible.
 
@@ -277,4 +222,4 @@ No test talks to a real external service; real data appears only in the orchestr
 The method runs the full suite at every step, so its speed matters. Measure first (per-test durations, database
 teardown cost, scheduler behaviour), then fix the measured causes: a no-fsync tmpfs test database, a work-stealing
 parallel scheduler, longest-first ordering that keeps fixture groups together, and splitting the one test that floors
-the run (with its expensive setup built once and cloned). Print the slowest tests in every run.
+the run (with its expensive setup built once and cloned).

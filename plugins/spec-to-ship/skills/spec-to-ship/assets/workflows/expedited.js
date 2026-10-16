@@ -1,6 +1,6 @@
 export const meta = {
   name: 'expedited-build',
-  description: 'Expedited track: short Part B with a test plan → backend + contract (tests first) → frontend + E2E (tests first) → one verifier (diff, red runs, real browser) → at most one fix',
+  description: 'Expedited track: short Part B → backend → frontend (tests first) → one verifier → at most one fix',
   phases: [{ title: 'Spec' }, { title: 'Backend' }, { title: 'Frontend' }, { title: 'Verify' }, { title: 'Fix' }],
 }
 
@@ -9,9 +9,10 @@ const CONFIG = {
   repo: '/path/to/repo',
   mainSha: '<sha>',
   spec: '/path/to/repo/specs/NN_FEATURE.md',
-  mockup: '/path/to/scratch/mockups.html',   // the approved mockup page, or null
+  mockup: '/path/to/repo/specs/MOCKUPS/NN_FEATURE.html',   // the owner's design reference or the approved mockup, or null
   look: 'Option A of the mockup (describe the approved look in one paragraph: layout, states, copy).',
   releaseScope: 'stop after the gate',        // the owner's answer: stop after the gate | commit and push | deploy
+  specFormat: '/abs/path/to/skill/references/spec-format.md', // subagents don't know where the plugin is installed
   scratch: '/path/to/scratch',
   safety: 'Every shell starts with the project agent marker; never read secrets; fake providers only; only agent-safe stack targets; NO git add/commit/push/stash/checkout/reset; never touch the PM drafts or production; no owner-personal examples in product text.',
   backendOnly: false,   // set true to skip the frontend agent
@@ -23,7 +24,7 @@ const CONFIG = {
 
 const BASE = `Repo ${CONFIG.repo} (main at ${CONFIG.mainSha}). Spec: ${CONFIG.spec} (Part A = the product note, binding). Approved look: ${CONFIG.look}${CONFIG.mockup ? ` Mockup: ${CONFIG.mockup}.` : ''} ${CONFIG.safety}
 Contract changes only via the repo's schema regeneration; tenancy, guards and choke points hold. This is an EXPEDITED build.
-Harness gotcha: \\uXXXX escapes typed into tool inputs can become literal invisible characters; scan files you write.`
+Harness gotcha: \\uXXXX in tool inputs may land as invisible characters; build them in code, scan written files.`
 const REPORT = { type: 'object', properties: { summary: { type: 'string' }, files_changed: { type: 'array', items: { type: 'string' } }, red_run: { type: 'string' }, tests: { type: 'string' }, ccrs: { type: 'array', items: { type: 'string' } }, open_issues: { type: 'array', items: { type: 'string' } } }, required: ['summary', 'files_changed', 'tests', 'open_issues'] }
 const BUILDER_REPORT = { ...REPORT, required: [...REPORT.required, 'red_run'] }
 const VERDICT = { type: 'object', properties: { verdict: { type: 'string', enum: ['pass', 'fail'] }, findings: { type: 'array', items: { type: 'object', properties: { severity: { type: 'string', enum: ['blocker', 'major', 'minor'] }, file: { type: 'string' }, problem: { type: 'string' }, evidence: { type: 'string' }, fix: { type: 'string' } }, required: ['severity', 'problem', 'fix'] } }, checked: { type: 'string' } }, required: ['verdict', 'findings', 'checked'] }
@@ -35,7 +36,7 @@ if (!CONFIG.frontendOnly) {
   phase('Spec')
   rep.spec = await agent(`${BASE}
 
-Write a SHORT engineering Part B into ${CONFIG.spec} (keep the front matter; keep Part A verbatim under "# Part A — Product (PM, <date>)"; update the header quote: look approved from mockups on <date>, expedited build at the owner's request; Part B wins where they differ). Read the current code first. 150–300 lines, exact names, no TBDs: footprint (migration? new routes? prompt changes?), read shape, write shape, flows to unify, copy strings, a TEST PLAN (named tests per place: backend/frontend written first and seen failing; E2E incl. phone width written after the code and proven able to fail by a deliberate break; negative tests start with a positive precondition), docs, a release line with the scope the owner chose (${CONFIG.releaseScope}), B0 departures. Return a summary with every decision.`, { label: 'spec', phase: 'Spec', schema: REPORT })
+Write a SHORT engineering Part B into ${CONFIG.spec} (keep the front matter; keep Part A verbatim under "# Part A — Product (PM, <date>)"; update the header quote: look approved from mockups on <date>, expedited build at the owner's request; Part B wins where they differ). Read the current code first. Follow the "Expedited Part B" section of ${CONFIG.specFormat}, with exact names; release scope ${CONFIG.releaseScope}. Return a summary with every decision.`, { label: 'spec', phase: 'Spec', schema: REPORT })
 
   phase('Backend')
   rep.be = await agent(`${BASE}\n\nYou are the BACKEND agent. TESTS FIRST: write the backend tests from Part B's test plan, run them and ${redRule('backend')}; then implement Part B of ${CONFIG.spec} for the backend and the contract (schemas, regenerated client types, mock fixtures for the new fields — the frontend agent does the UI), backend tests per Part B (incl. isolation probes for changed routes), the architecture change log. Spec summary: ${JSON.stringify(rep.spec)}\n${CONFIG.beDod}\nReport CCRs for anything you had to change outside the expected footprint.`, { label: 'backend', phase: 'Backend', schema: BUILDER_REPORT })

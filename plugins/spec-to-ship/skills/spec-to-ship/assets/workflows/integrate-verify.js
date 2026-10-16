@@ -1,6 +1,6 @@
 export const meta = {
   name: 'build-integrate-verify',
-  description: 'Build part 3: integration (cross-workstream issues, INTEGRATION markers, full suites + E2E, acceptance walk) → final workstream (real E2E and pipeline tests in place of the placeholders, docs) → lens verifiers → fix loop',
+  description: 'Build part 3: integration → final workstream → lens verifiers → fix loop',
   phases: [{ title: 'Integration' }, { title: 'Final' }, { title: 'Verify' }, { title: 'Fix' }],
 }
 
@@ -11,7 +11,7 @@ const CONFIG = {
   contractSha: '<sha of the committed contract step>',
   headSha: '<sha of the committed workstreams>',
   wsReports: '/path/to/scratch/ws-results.json',  // workstream reports + verifier minors (saved by the orchestrator)
-  testing: '/abs/path/to/skill/references/testing.md',
+  testing: '/abs/path/to/skill/references/testing.md', // for a stack without a strict marker (Rust, Go, JUnit, .NET, node:test, …) make it '<…>/testing.md and <…>/markers-other-stacks.md'
   acceptanceFiles: '<every acceptance test file from the contract file table>',
   testDirs: '<test dirs, e.g. backend/tests frontend/src e2e>',
   scratch: '/path/to/scratch',
@@ -25,13 +25,13 @@ const CONFIG = {
     { key: 'privacy', p: 'PRIVACY AND INJECTION lens: an injection string renders neutralized and framed as data in every call it reaches; no user text in logs/job results/error columns/foreign audit rows — prove it with scratch tests that capture logs for real, including a forced DB error; emails escape HTML; exports pass the formula-injection guard.' },
     { key: 'races', p: 'RE-RUNS AND RACES lens: the eligibility matrix for background re-runs, every exit path clears its markers, in-flight races in both orders, user decisions never overwritten, no surprise side effects (alerts, rule offers). Write scratch DB tests for uncovered cases.' },
     { key: 'tenancy', p: 'TENANCY AND GUARDS lens (if multi-tenant): every new query scoped (run with two tenants, the SQL auditor log stays empty), foreign ids answer like unknown ids, guard scripts catch violations (try a scratch one), lock order, migration on a multi-tenant DB.' },
-    { key: 'ux', p: 'UX lens (real browser): start an agent-safe dev stack, seed it, drive it with Playwright at phone and desktop width, light and dark, through every new state; 44 px targets on each control own box, no horizontal scroll at phone width, focus return, aria names, copy as specified, no console errors. Stop the stack at the end.' },
+    { key: 'ux', p: 'UX lens (real browser): start an agent-safe dev stack, seed it, drive it with Playwright at phone and desktop width, light and dark, through every new state, comparing with the UI reference named in the spec header (MOCKUPS/ file or Figma export) where there is one; 44 px targets on each control own box, no horizontal scroll at phone width, focus return, aria names, copy as specified, no console errors. Stop the stack at the end.' },
   ],
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BASE = `Repo ${CONFIG.repo}. Binding spec ${CONFIG.spec} (Part B wins). Contract (${CONFIG.contractSha}) and workstreams (${CONFIG.headSha}) are COMMITTED; workstream reports: ${CONFIG.wsReports}. Tests-first rules: ${CONFIG.testing}. Never check out another commit; read old versions with git show. ${CONFIG.safety}
-Harness gotcha: \\uXXXX escapes typed into tool inputs can become literal invisible characters; build them in code and scan files you write.`
+Harness gotcha: \\uXXXX in tool inputs may land as invisible characters; build them in code, scan written files.`
 const REPORT = { type: 'object', properties: { summary: { type: 'string' }, files_changed: { type: 'array', items: { type: 'string' } }, red_run: { type: 'string' }, markers_removed: { type: 'array', items: { type: 'string' } }, tests: { type: 'string' }, open_issues: { type: 'array', items: { type: 'string' } } }, required: ['summary', 'files_changed', 'tests', 'open_issues'] }
 const FINAL_REPORT = { ...REPORT, required: [...REPORT.required, 'red_run', 'markers_removed'] }
 const VERDICT = { type: 'object', properties: { verdict: { type: 'string', enum: ['pass', 'fail'] }, findings: { type: 'array', items: { type: 'object', properties: { severity: { type: 'string', enum: ['blocker', 'major', 'minor'] }, file: { type: 'string' }, problem: { type: 'string' }, evidence: { type: 'string' }, fix: { type: 'string' } }, required: ['severity', 'problem', 'fix'] } }, checked: { type: 'string' } }, required: ['verdict', 'findings', 'checked'] }
