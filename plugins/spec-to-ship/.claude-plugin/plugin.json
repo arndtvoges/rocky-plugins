@@ -1,0 +1,9 @@
+{
+  "name": "spec-to-ship",
+  "displayName": "Spec to Ship",
+  "version": "1.0.0",
+  "description": "Take a feature from a product spec to a verified production deploy with multi-agent workflows: survey, owner interview, engineering spec with critique rounds, a hard stop for the owner's go, contract step, parallel workstreams with independent verifiers, release gate, deploy and post-deploy checks. Full and expedited tracks. Requires Claude Code's Workflow tool.",
+  "author": { "name": "arndtvoges" },
+  "license": "MIT",
+  "keywords": ["spec", "product-engineering", "multi-agent", "workflow", "release", "verification"]
+}

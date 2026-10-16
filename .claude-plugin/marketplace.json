@@ -1,0 +1,14 @@
+{
+  "name": "rocky-plugins",
+  "owner": { "name": "arndtvoges" },
+  "metadata": {
+    "description": "Product engineering plugins for Claude Code: ship features from a product spec to a verified production deploy."
+  },
+  "plugins": [
+    {
+      "name": "spec-to-ship",
+      "source": "./plugins/spec-to-ship",
+      "description": "Spec-driven delivery: survey, owner interview, engineering spec with critique rounds, stop for go, parallel multi-agent build with independent verifiers, release gate, deploy and post-deploy checks. Full and expedited tracks."
+    }
+  ]
+}
